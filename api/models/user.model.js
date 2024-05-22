@@ -10,7 +10,7 @@ export const createUserTable = async () => {
         WHERE table_schema = ? AND table_name = ?
     `;
     const tableName = "users";
-    const databaseName = process.env.DATABASE; // Thay đổi tên database tùy thuộc vào cài đặt của bạn
+    const databaseName = process.env.DATABASE;
 
     try {
         // Check if the table already exists in the database
