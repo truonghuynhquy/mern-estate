@@ -1,8 +1,5 @@
 // models/User.js
-import { dbConnection } from "../database/dbConnection.js";
-import dotenv from "dotenv";
-
-dotenv.config({ path: "../config.env" });
+import { dbQuery } from "../database/dbQuery.js";
 
 export const createUserTable = async () => {
     const checkTableQuery = `
@@ -14,12 +11,11 @@ export const createUserTable = async () => {
 
     try {
         // Check if the table already exists in the database
-        const [rows, fields] = await dbConnection.query(checkTableQuery, [
+        const [rows, fields] = await dbQuery.query(checkTableQuery, [
             databaseName,
             tableName,
         ]);
 
-        console.log(rows);
         const tableCount = rows.tableCount;
 
         // If the table does not exist, create a new one
@@ -35,7 +31,7 @@ export const createUserTable = async () => {
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
             `;
-            await dbConnection.query(createTableQuery);
+            await dbQuery.query(createTableQuery);
             console.log('Table "users" created successfully');
         } else {
             console.log('Table "users" already exists');
@@ -43,6 +39,6 @@ export const createUserTable = async () => {
     } catch (error) {
         console.error("Error creating table:", error);
     } finally {
-        dbConnection.close();
+        dbQuery.close();
     }
 };
