@@ -34,6 +34,6 @@ export function checkMySQLConnection() {
             console.error("Error connecting to MySQL:", err.stack);
             return;
         }
-        console.log("Connected to MySQL as id", connection.threadId);
+        console.log("Connected to MySQL");
     });
 }
