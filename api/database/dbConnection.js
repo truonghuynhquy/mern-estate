@@ -16,10 +16,10 @@ export const pool = mysql.createPool({
 
 export async function checkMySQLConnection() {
     try {
-        // Get a connection from the pool
+        // TODO: Get a connection from the pool
         const connection = await pool.getConnection();
         console.log("Connected to MySQL");
-        connection.release(); // Release the connection after use
+        connection.release(); // COMMENT: Release the connection after use
     } catch (err) {
         console.error("Error connecting to MySQL:", err.stack);
     }

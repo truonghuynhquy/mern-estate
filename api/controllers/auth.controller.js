@@ -21,7 +21,6 @@ export const signup = async (req, res) => {
         ]);
 
         const userId = result.insertId;
-
         const userData = await dbQuery.query(
             "SELECT * FROM users WHERE id = ?",
             [userId]
