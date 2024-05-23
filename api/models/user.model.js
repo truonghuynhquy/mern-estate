@@ -38,7 +38,5 @@ export const createUserTable = async () => {
         }
     } catch (error) {
         console.error("Error creating table:", error);
-    } finally {
-        dbQuery.close();
     }
 };

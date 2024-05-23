@@ -1,18 +1,20 @@
-import { connection } from "./dbConnection.js";
+import { pool } from "./dbConnection.js";
 
 export const dbQuery = {
-    query: (sql, values) => {
-        return new Promise((resolve, reject) => {
-            connection.query(sql, values, (error, results, fields) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(results);
-                }
-            });
-        });
+    query: async (sql, values) => {
+        try {
+            // Get a connection from the pool
+            const connection = await pool.getConnection();
+            // Execute the query
+            const [results, fields] = await connection.execute(sql, values);
+            connection.release(); // Release the connection after use
+            return results;
+        } catch (error) {
+            throw error;
+        }
     },
     close: () => {
-        connection.end();
+        console.log("Close connection");
+        pool.end();
     },
 };
