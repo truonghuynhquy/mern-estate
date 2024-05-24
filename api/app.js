@@ -4,6 +4,7 @@ import morgan from "morgan";
 import userRouter from "./routes/user.route.js";
 import authRouter from "./routes/auth.route.js";
 import { checkMySQLConnection } from "./database/dbConnection.js";
+import globalErrorHandler from "./controllers/error.controller.js";
 
 const app = express();
 app.use(express.json());
@@ -13,5 +14,7 @@ checkMySQLConnection();
 
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
+
+app.use(globalErrorHandler);
 
 export default app;
