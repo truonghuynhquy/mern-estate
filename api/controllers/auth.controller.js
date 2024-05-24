@@ -1,8 +1,10 @@
+import bcryptjs from "bcryptjs";
 import { dbQuery } from "../database/dbQuery.js";
 import { isValidEmail } from "../utils/validation.js";
 
 export const signup = async (req, res) => {
     const { username, email, password } = req.body;
+    const hashedPassword = bcryptjs.hashSync(password, 10);
 
     if (!isValidEmail(email)) {
         console.log("Invalid Email");
@@ -17,7 +19,7 @@ export const signup = async (req, res) => {
         const result = await dbQuery.query(createUserQuery, [
             username,
             email,
-            password,
+            hashedPassword,
         ]);
 
         const userId = result.insertId;
