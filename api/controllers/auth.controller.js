@@ -40,3 +40,35 @@ export const signup = async (req, res, next) => {
     next(error);
   }
 };
+
+export const signin = async (req, res, next) => {
+  const { email, password } = req.body;
+
+  try {
+    // NOTE: Find user into database by email
+    const userData = await dbQuery.query(
+      "SELECT * FROM users WHERE email = ?",
+      [email]
+    );
+    if (userData.length === 0) {
+      return next(new AppError("User not found", 404));
+    }
+    const validPassword = await bcryptjs.compare(
+      password,
+      userData[0].password
+    );
+
+    if (!validPassword) {
+      return next(new AppError("Invalid Password", 401));
+    }
+
+    const { password: pass, ...rest } = userData[0];
+    console.log(rest);
+
+    res.status(201).json({
+      success: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
