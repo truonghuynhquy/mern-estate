@@ -1,6 +1,46 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { setError } from "../redux/errorAlert/errorSlice";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function SignUp() {
+  const [formData, setFormData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  // const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      console.log(data);
+      if (!data.success) {
+        setLoading(false);
+        dispatch(setError(data.message));
+      }
+      // navigate("/sign-in");
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+      dispatch(setError(error.message));
+    }
+  };
+
   return (
     <div className="flex justify-center items-center w-full h-auto text-gray-800 font-sans overflow-hidden sm:h-[56rem]">
       <div className="w-1/2 flex flex-col items-center justify-center p-6 relative">
@@ -21,25 +61,34 @@ export default function SignUp() {
         <div className="w-[352px] flex-shrink-0 my-6 h-min">
           <h1 className="text-2xl mb-6 text-center font-semibold ">Sign Up</h1>
 
-          <form className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <input
               type="text"
               placeholder="Username"
               className="border p-3 rounded-lg"
+              id="username"
+              onChange={handleChange}
             />
             <input
               type="email"
               placeholder="Email"
               className="border p-3 rounded-lg"
+              id="email"
+              onChange={handleChange}
             />
             <input
               type="password"
               placeholder="Password"
               className="border p-3 rounded-lg"
+              id="password"
+              onChange={handleChange}
             />
 
-            <button className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disable:opacity-80">
-              Sign Up
+            <button
+              disabled={loading}
+              className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disable:opacity-80"
+            >
+              {loading ? "Loading..." : "Sign Up"}
             </button>
           </form>
 

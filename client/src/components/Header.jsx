@@ -1,54 +1,68 @@
-import { FaSearch } from "react-icons/fa";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Alert } from "@mui/material";
+import { FaSearch } from "react-icons/fa";
+import { useSelector, useDispatch } from "react-redux";
+import { setError } from "../redux/errorAlert/errorSlice";
 
-export default function Header() {
-    return (
-        <header className="bg-slate-200 shadow-md">
-            <div className="flex justify-between items-center max-w-6xl mx-auto p-3">
-                <>
-                    <Link to="/">
-                        <h1 className="font-bold text-sm sm:text-xl flex flex-wrap">
-                            <span className="text-slate-500">Hines</span>
-                            <span className="text-slate-700">Estate</span>
-                        </h1>
-                    </Link>
-                </>
+const Header = () => {
+  const { error } = useSelector((state) => state.error);
+  const dispatch = useDispatch();
+  const [alertOpen, setAlertOpen] = useState(true);
 
-                <>
-                    <form className="bg-slate-100 p-3 rounded-lg flex items-center">
-                        <input
-                            type="text"
-                            placeholder="Search ...."
-                            className="bg-transparent focus:outline-none w-24 sm:w-64"
-                        />
-                        <button>
-                            <FaSearch className="text-slate-600" />
-                        </button>
-                    </form>
-                </>
+  const handleCloseAlert = () => {
+    setAlertOpen(!alertOpen);
+    dispatch(setError(null));
+  };
 
-                <>
-                    <ul className="flex gap-4">
-                        <Link to="/">
-                            <li className="hidden sm:inline text-slate-700 hover:underline">
-                                Home
-                            </li>
-                        </Link>
+  return (
+    <header className="bg-slate-200 shadow-md relative">
+      {error && (
+        <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-30 w-full max-w-6xl p-3">
+          <Alert severity="warning" onClose={handleCloseAlert}>
+            {error}
+          </Alert>
+        </div>
+      )}
+      <div className="z-10 flex justify-between items-center max-w-6xl mx-auto p-3">
+        <Link to="/">
+          <h1 className="font-bold text-sm sm:text-xl flex flex-wrap">
+            <span className="text-slate-500">Hines</span>
+            <span className="text-slate-700">Estate</span>
+          </h1>
+        </Link>
 
-                        <Link to="/about">
-                            <li className="hidden sm:inline text-slate-700 hover:underline">
-                                About
-                            </li>
-                        </Link>
+        <form className="bg-slate-100 p-3 rounded-lg flex items-center">
+          <input
+            type="text"
+            placeholder="Search ...."
+            className="bg-transparent focus:outline-none w-24 sm:w-64"
+          />
+          <button>
+            <FaSearch className="text-slate-600" />
+          </button>
+        </form>
 
-                        <Link to="/sign-in">
-                            <li className="text-slate-700 hover:underline">
-                                Sign In
-                            </li>
-                        </Link>
-                    </ul>
-                </>
-            </div>
-        </header>
-    );
-}
+        <ul className="flex gap-4">
+          <Link to="/">
+            <li className="hidden sm:inline text-slate-700 hover:underline">
+              Home
+            </li>
+          </Link>
+
+          <Link to="/about">
+            <li className="hidden sm:inline text-slate-700 hover:underline">
+              About
+            </li>
+          </Link>
+
+          <Link to="/sign-in">
+            <li className="text-slate-700 hover:underline">Sign In</li>
+          </Link>
+        </ul>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
