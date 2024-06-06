@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Alert } from "@mui/material";
 import { FaSearch } from "react-icons/fa";
@@ -9,6 +9,17 @@ const Header = () => {
   const { error } = useSelector((state) => state.error);
   const dispatch = useDispatch();
   const [alertOpen, setAlertOpen] = useState(true);
+
+  useEffect(() => {
+    if (error) {
+      setAlertOpen(true);
+      const timeout = setTimeout(() => {
+        setAlertOpen(false);
+        dispatch(setError(null));
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [error, dispatch]);
 
   const handleCloseAlert = () => {
     setAlertOpen(!alertOpen);
