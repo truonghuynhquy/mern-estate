@@ -1,7 +1,9 @@
 import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { dbQuery } from "../database/dbQuery.js";
 import { isValidEmail } from "../utils/validation.js";
 import AppError from "../utils/appError.js";
+import redis from "../database/redisClient.js";
 
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
@@ -30,6 +32,9 @@ export const signup = async (req, res, next) => {
       userId,
     ]);
 
+    // Save users in Redis
+    await redis.set(`user:${userId}`, JSON.stringify(userData[0]));
+
     res.status(201).json({
       success: true,
       data: {
@@ -45,28 +50,43 @@ export const signin = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    // NOTE: Find user into database by email
-    const userData = await dbQuery.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email]
-    );
-    if (userData.length === 0) {
-      return next(new AppError("User not found", 404));
+    // Find users in Redis first
+    let userData = await redis.get(`user:${email}`);
+    if (userData) {
+      userData = JSON.parse(userData); // If available in Redis, parse JSON from Redis
+    } else {
+      // If not in Redis, search in database
+      const dbUserData = await dbQuery.query(
+        "SELECT * FROM users WHERE email = ?",
+        [email]
+      );
+      if (dbUserData.length === 0) {
+        return next(new AppError("User not found", 404));
+      }
+      userData = dbUserData[0];
+
+      // Store users into Redis
+      await redis.set(`user:${email}`, JSON.stringify(userData)); // Lưu trữ trong Redis
     }
-    const validPassword = await bcryptjs.compare(
-      password,
-      userData[0].password
-    );
+
+    // Check password
+    const validPassword = await bcryptjs.compare(password, userData.password);
 
     if (!validPassword) {
       return next(new AppError("Invalid Password", 401));
     }
 
-    const { password: pass, ...rest } = userData[0];
+    // Create JWT Token
+    const token = jwt.sign({ id: userData.id }, process.env.JWT_SECRET);
+
+    // Returns user information (excluding password)
+    const { password: pass, ...rest } = userData;
     console.log(rest);
 
-    res.status(201).json({
+    res.cookie("access_token", token, { httpOnly: true }).status(201).json({
+      token,
       success: true,
+      data: rest,
     });
   } catch (error) {
     next(error);
