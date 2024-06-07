@@ -81,7 +81,6 @@ export const signin = async (req, res, next) => {
 
     // Returns user information (excluding password)
     const { password: pass, ...rest } = userData;
-    console.log(rest);
 
     res.cookie("access_token", token, { httpOnly: true }).status(201).json({
       token,
