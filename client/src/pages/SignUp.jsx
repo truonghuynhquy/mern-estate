@@ -28,7 +28,6 @@ export default function SignUp() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      console.log(data);
       if (!data.success) {
         setLoading(false);
         dispatch(setError(data.message));
@@ -36,7 +35,6 @@ export default function SignUp() {
       }
       navigate("/sign-in");
     } catch (error) {
-      console.log(error);
       setLoading(false);
       dispatch(setError(error.message));
     }
