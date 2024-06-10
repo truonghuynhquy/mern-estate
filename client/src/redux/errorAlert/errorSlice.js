@@ -18,6 +18,6 @@ const errorSlice = createSlice({
   },
 });
 
-export const { setError } = errorSlice.actions;
+export const { setError, setLoading } = errorSlice.actions;
 
 export default errorSlice.reducer;

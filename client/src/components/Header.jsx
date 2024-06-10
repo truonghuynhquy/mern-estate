@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setError } from "../redux/errorAlert/errorSlice";
 
 const Header = () => {
-  const { error } = useSelector((state) => state.error);
+  const { error } = useSelector((state) => state.error); // COMMENT: error { error: ...., loading: ... }
   const dispatch = useDispatch();
   const [alertOpen, setAlertOpen] = useState(true);
 

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setError, setLoading } from "../redux/errorAlert/errorSlice";
+import { signInSuccess } from "../redux/user/userSlice";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({});
-  const loading = useSelector((state) => state.loading);
+  const { loading } = useSelector((state) => state.error); // COMMENT: error { error: ...., loading: ... }
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -28,6 +29,7 @@ export default function SignIn() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+      dispatch(signInSuccess(data));
       if (!data.success) {
         dispatch(setLoading(true));
         dispatch(setError(data.message));
