@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   error: null,
+  loading: false,
 };
 
 const errorSlice = createSlice({
@@ -10,6 +11,9 @@ const errorSlice = createSlice({
   reducers: {
     setError: (state, action) => {
       state.error = action.payload;
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
     },
   },
 });

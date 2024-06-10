@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
-import { setError } from "../redux/errorAlert/errorSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { setError, setLoading } from "../redux/errorAlert/errorSlice";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
-  const [loading, setLoading] = useState(false);
+  const loading = useSelector((state) => state.loading);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -19,7 +19,7 @@ export default function SignUp() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
+      dispatch(setLoading(true));
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -29,13 +29,13 @@ export default function SignUp() {
       });
       const data = await res.json();
       if (!data.success) {
-        setLoading(false);
+        dispatch(setLoading(true));
         dispatch(setError(data.message));
         return;
       }
       navigate("/sign-in");
     } catch (error) {
-      setLoading(false);
+      dispatch(setLoading(true));
       dispatch(setError(error.message));
     }
   };
