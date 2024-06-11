@@ -6,7 +6,7 @@ const initialState = {
 };
 
 const errorSlice = createSlice({
-  name: "errorAlert",
+  name: "error",
   initialState,
   reducers: {
     setLoading: (state, action) => {
