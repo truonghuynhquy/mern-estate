@@ -29,15 +29,15 @@ export default function SignIn() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      dispatch(signInSuccess(data));
+      dispatch(setLoading(false));
       if (!data.success) {
-        dispatch(setLoading(true));
         dispatch(setError(data.message));
         return;
       }
+      dispatch(signInSuccess(data));
       navigate("/");
     } catch (error) {
-      dispatch(setLoading(true));
+      dispatch(setLoading(false));
       dispatch(setError(error.message));
     }
   };

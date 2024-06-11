@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
-  const { loading } = useSelector((state) => state.loading);
+  const { loading } = useSelector((state) => state.error);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -28,14 +28,14 @@ export default function SignUp() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+      dispatch(setLoading(false));
       if (!data.success) {
-        dispatch(setLoading(true));
         dispatch(setError(data.message));
         return;
       }
       navigate("/sign-in");
     } catch (error) {
-      dispatch(setLoading(true));
+      dispatch(setLoading(false));
       dispatch(setError(error.message));
     }
   };
