@@ -5,6 +5,14 @@ import { isValidEmail } from "../utils/validation.js";
 import AppError from "../utils/appError.js";
 import redis from "../database/redisClient.js";
 
+// Use to remove accents from string
+function removeAccents(str) {
+  return str
+    .normalize("NFD") // Normalize the string to signed form
+    .replace(/[\u0300-\u036f]/g, "") // Remove word marks
+    .toLowerCase(); // Convert to lowercase
+}
+
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
 
@@ -92,13 +100,6 @@ export const signin = async (req, res, next) => {
   }
 };
 
-function removeAccents(str) {
-  return str
-    .normalize("NFD") // Normalize the string to signed form
-    .replace(/[\u0300-\u036f]/g, "") // Remove word marks
-    .toLowerCase(); // Convert to lowercase
-}
-
 export const google = async (req, res, next) => {
   const { name, email, photo } = req.body;
 
@@ -143,14 +144,11 @@ export const google = async (req, res, next) => {
           [userId]
         );
         userData = newUserData;
-
-        // Save user information to Redis
-        await redis.set(`user:${email}`, JSON.stringify(userData));
       } else {
-        // If found in the database, save it to Redis
         userData = dbUserData[0];
-        await redis.set(`user:${email}`, JSON.stringify(userData));
       }
+      // Save user information to Redis
+      await redis.set(`user:${email}`, JSON.stringify(userData));
     }
 
     // Generate JWT tokens
