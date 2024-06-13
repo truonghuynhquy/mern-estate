@@ -104,7 +104,7 @@ export const google = async (req, res, next) => {
   const { name, email, photo } = req.body;
 
   try {
-    //Search for users in Redis first
+    // Search for users in Redis first
     let userData = await redis.get(`user:${email}`);
 
     if (userData) {
