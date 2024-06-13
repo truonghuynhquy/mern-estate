@@ -91,3 +91,80 @@ export const signin = async (req, res, next) => {
     next(error);
   }
 };
+
+function removeAccents(str) {
+  return str
+    .normalize("NFD") // Normalize the string to signed form
+    .replace(/[\u0300-\u036f]/g, "") // Remove word marks
+    .toLowerCase(); // Convert to lowercase
+}
+
+export const google = async (req, res, next) => {
+  const { name, email, photo } = req.body;
+
+  try {
+    //Search for users in Redis first
+    let userData = await redis.get(`user:${email}`);
+
+    if (userData) {
+      // If available in Redis, parse JSON
+      userData = JSON.parse(userData);
+    } else {
+      // If available in Redis, parse JSON
+      const dbUserData = await dbQuery.query(
+        "SELECT * FROM users WHERE email = ?",
+        [email]
+      );
+
+      if (dbUserData.length === 0) {
+        // If not found in the database, create a new user
+        const generatedPassword =
+          Math.random().toString(36).slice(-8) +
+          Math.random().toString(36).slice(-8);
+        const salt = await bcryptjs.genSalt(10);
+        const hashedPassword = await bcryptjs.hash(generatedPassword, salt);
+
+        const insertResult = await dbQuery.query(
+          "INSERT INTO users (username, email, password, avatar) VALUES (?, ?, ?, ?)",
+          [
+            removeAccents(name).split(" ").join("").toLowerCase() +
+              Math.random().toString(36).slice(-4),
+            email,
+            hashedPassword,
+            photo,
+          ]
+        );
+
+        const userId = insertResult.insertId;
+
+        // Get new user information from the database
+        const [newUserData] = await dbQuery.query(
+          "SELECT * FROM users WHERE id = ?",
+          [userId]
+        );
+        userData = newUserData;
+
+        // Save user information to Redis
+        await redis.set(`user:${email}`, JSON.stringify(userData));
+      } else {
+        // If found in the database, save it to Redis
+        userData = dbUserData[0];
+        await redis.set(`user:${email}`, JSON.stringify(userData));
+      }
+    }
+
+    // Generate JWT tokens
+    const token = jwt.sign({ id: userData.id }, process.env.JWT_SECRET);
+
+    // Returns user information (password excluded)
+    const { password, ...rest } = userData;
+
+    res.cookie("access_token", token, { httpOnly: true }).status(200).json({
+      token,
+      success: true,
+      data: rest,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
