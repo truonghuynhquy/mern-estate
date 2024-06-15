@@ -59,7 +59,12 @@ export const signin = async (req, res, next) => {
 
   try {
     // Find users in Redis first
-    let userData = await redis.get(`user:${email}`);
+    const resultRedis = await redis.get(`user:${email}`);
+    const userRedisResult = JSON.parse(resultRedis);
+    const redisId = userRedisResult.id;
+
+    let userData = await redis.get(`user:${redisId}`);
+
     if (userData) {
       userData = JSON.parse(userData); // If available in Redis, parse JSON from Redis
     } else {
@@ -74,7 +79,7 @@ export const signin = async (req, res, next) => {
       userData = dbUserData[0];
 
       // Store users into Redis
-      await redis.set(`user:${email}`, JSON.stringify(userData)); // Lưu trữ trong Redis
+      await redis.set(`user:${userData.id}`, JSON.stringify(userData)); // Lưu trữ trong Redis
     }
 
     // Check password
