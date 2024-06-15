@@ -17,7 +17,7 @@ const Header = () => {
       setAlertOpen(true);
       const timeout = setTimeout(() => {
         setAlertOpen(false);
-        dispatch(setError(null));
+        dispatch(setError(null)); //  Reset error message
       }, 3000);
       return () => clearTimeout(timeout);
     } else if (success) {

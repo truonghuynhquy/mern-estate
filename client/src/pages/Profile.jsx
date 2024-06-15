@@ -56,7 +56,6 @@ export default function Profile() {
               ...prevData,
               avatar: downloadURL,
             }));
-
             setFileUploadSuccess(true);
             setFileUploadError(false);
             dispatch(setSuccess("Image successfully uploaded!"));
