@@ -1,5 +1,6 @@
 import bcryptjs from "bcryptjs";
 import { dbQuery } from "../database/dbQuery.js";
+import redis from "../database/redisClient.js";
 import AppError from "../utils/appError.js";
 
 export const test = (req, res) => {
@@ -11,13 +12,12 @@ export const updateUser = async (req, res, next) => {
     return next(new AppError("You can only update your own account!", 401));
   }
   try {
-    const { username, email, password, avatar } = req.body;
-    console.log(username, email, password, avatar);
+    const { username, email, pass, avatar } = req.body;
 
     let hashedPassword = null;
 
-    if (password) {
-      hashedPassword = bcryptjs.hashSync(password, 10);
+    if (pass) {
+      hashedPassword = bcryptjs.hashSync(pass, 10);
     }
 
     // Update user in MySQL with conditional updates
@@ -47,12 +47,14 @@ export const updateUser = async (req, res, next) => {
       return next(new AppError("User not found", 404));
     }
 
-    const userData = await dbQuery.query(
-      "SELECT id, username, email, avatar,created_at, updated_at FROM users WHERE id = ?",
-      [req.params.id]
-    );
+    const userData = await dbQuery.query("SELECT * FROM users WHERE id = ?", [
+      req.params.id,
+    ]);
 
-    res.json({ status: "success", data: userData[0] });
+    // Save users in Redis
+    await redis.set(`user:${req.params.id}`, JSON.stringify(userData[0]));
+    const { password, ...rest } = userData[0];
+    res.json({ status: "success", data: rest });
   } catch (error) {
     next(error);
   }
