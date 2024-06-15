@@ -80,26 +80,28 @@ export default function Profile() {
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
 
-      <input
-        type="file"
-        ref={fileRef}
-        hidden
-        accept="image/*"
-        onChange={(e) => setFile(e.target.files[0])}
-      />
-
       <form action="" className="flex flex-col gap-4">
+        <input
+          type="file"
+          ref={fileRef}
+          hidden
+          accept="image/*"
+          onChange={(e) => setFile(e.target.files[0])}
+        />
+
         <img
           src={formData.avatar || currentUser.data.avatar}
           alt="profile"
           className="rounded-full h-32 w-32 object-cover cursor-pointer self-center mt-2"
           onClick={() => fileRef.current.click()}
         />
+
         <p className="text-sm self-center">
           {filePercentage > 0 && filePercentage < 100 && (
             <span className="text-slate-700">{`Uploading: ${filePercentage}%`}</span>
           )}
         </p>
+
         <input
           type="text"
           placeholder="Username"
@@ -107,6 +109,7 @@ export default function Profile() {
           id="username"
           className="border p-3 rounded-lg"
         />
+
         <input
           type="email"
           placeholder="Email"
@@ -114,6 +117,7 @@ export default function Profile() {
           id="email"
           className="border p-3 rounded-lg"
         />
+
         <input
           type="password"
           placeholder="Password"
