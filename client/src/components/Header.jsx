@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 import { Alert } from "@mui/material";
 import { FaSearch } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-import { setError } from "../redux/errorAlert/errorSlice";
+import { setError, setSuccess } from "../redux/errorAlert/errorSlice";
 
 const Header = () => {
-  const { error } = useSelector((state) => state.error); // COMMENT: error { error: ...., loading: ... }
+  const { error, success } = useSelector((state) => state.error); // COMMENT: error { error: ...., loading: ... }
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [alertOpen, setAlertOpen] = useState(true);
+  const [successOpen, setSuccessOpen] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -19,23 +20,35 @@ const Header = () => {
         dispatch(setError(null));
       }, 3000);
       return () => clearTimeout(timeout);
+    } else if (success) {
+      setSuccessOpen(true);
+      const timeout = setTimeout(() => {
+        setSuccessOpen(false);
+        dispatch(setSuccess(null)); // Reset success message
+      }, 3000);
+      return () => clearTimeout(timeout);
     }
-  }, [error, dispatch]);
-
+  }, [error, success, dispatch]);
   const handleCloseAlert = () => {
     setAlertOpen(!alertOpen);
+    setSuccessOpen(!successOpen);
     dispatch(setError(null));
+    dispatch(setSuccess(null));
   };
 
   return (
     <header className="bg-slate-200 shadow-md relative">
-      {error && (
+      {(error || success) && (
         <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-30 w-full max-w-6xl p-3">
-          <Alert severity="warning" onClose={handleCloseAlert}>
-            {error}
+          <Alert
+            severity={error ? "error" : "success"}
+            onClose={handleCloseAlert}
+          >
+            {error || success}
           </Alert>
         </div>
       )}
+
       <div className="z-10 flex justify-between items-center max-w-6xl mx-auto p-3">
         <Link to="/">
           <h1 className="font-bold text-sm sm:text-xl flex flex-wrap">
