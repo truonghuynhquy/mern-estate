@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
 import {
   getDownloadURL,
   getStorage,
@@ -7,13 +7,11 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { app } from "../firebase";
-import { Link } from "react-router-dom";
 import { setError, setSuccess } from "../redux/errorAlert/errorSlice";
 
 export default function Profile() {
-  const fileRef = useRef(null);
   const { currentUser } = useSelector((state) => state.user);
-  const { loading } = useSelector((state) => state.error);
+  const fileRef = useRef(null);
   const [file, setFile] = useState(undefined);
   const [filePercentage, setFilePercentage] = useState(0);
   const [fileUploadError, setFileUploadError] = useState(false);
@@ -45,7 +43,7 @@ export default function Profile() {
         setFilePercentage(progress);
       },
       (error) => {
-        console.error("Error during file upload:", error);
+        console.error("Error during file upload", error);
         setFileUploadError(true);
         dispatch(setError("Error Image Upload (image must be less than 2 mb)"));
       },
@@ -56,9 +54,10 @@ export default function Profile() {
               ...prevData,
               avatar: downloadURL,
             }));
+
             setFileUploadSuccess(true);
             setFileUploadError(false);
-            dispatch(setSuccess("Image successfully uploaded!"));
+            dispatch(setSuccess("Image Upload Success"));
           })
           .catch((error) => {
             console.error("Error getting download URL:", error);
@@ -68,7 +67,8 @@ export default function Profile() {
             );
           })
           .finally(() => {
-            if (!fileUploadError) {
+            if (!fileUploadError && !fileUploadSuccess) {
+              setFilePercentage(0);
               dispatch(setError(null)); // Clear error messages when there are no errors
             }
           });
@@ -76,41 +76,30 @@ export default function Profile() {
     );
   };
 
-  const renderUploadStatus = () => {
-    if (fileUploadError) {
-      return;
-    } else if (filePercentage > 0 && filePercentage < 100) {
-      return (
-        <span className="text-slate-700">{`Uploading ${filePercentage}%`}</span>
-      );
-    } else if (fileUploadSuccess) {
-      return;
-    } else {
-      return ""; // In the default case, nothing is displayed
-    }
-  };
-
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
 
+      <input
+        type="file"
+        ref={fileRef}
+        hidden
+        accept="image/*"
+        onChange={(e) => setFile(e.target.files[0])}
+      />
+
       <form action="" className="flex flex-col gap-4">
-        <input
-          type="file"
-          ref={fileRef}
-          hidden
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
         <img
-          onClick={() => fileRef.current.click()}
           src={formData.avatar || currentUser.data.avatar}
           alt="profile"
-          className="rounded-full h-24 w-24 object-cover cursor-pointer self-center mt-2"
+          className="rounded-full h-32 w-32 object-cover cursor-pointer self-center mt-2"
+          onClick={() => fileRef.current.click()}
         />
-
-        <p className="text-sm self-center">{renderUploadStatus()}</p>
-
+        <p className="text-sm self-center">
+          {filePercentage > 0 && filePercentage < 100 && (
+            <span className="text-slate-700">{`Uploading: ${filePercentage}%`}</span>
+          )}
+        </p>
         <input
           type="text"
           placeholder="Username"
@@ -131,23 +120,19 @@ export default function Profile() {
           id="password"
           className="border p-3 rounded-lg"
         />
-        <button
-          disabled={loading}
-          className="bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80"
-        >
+
+        <button className="bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95">
           Update
         </button>
-        <Link
-          to="/create-listing"
-          className="bg-green-700 text-white p-3 rounded-lg uppercase text-center hover:opacity-95"
-        >
+
+        <button className="bg-green-700 text-white rounded-lg p-3 uppercase hover:opacity-95">
           Create Listing
-        </Link>
+        </button>
       </form>
 
-      <div className="flex justify-between mt-5">
-        <span className="text-red-700 cursor-pointer">Delete account</span>
-        <span className="text-red-700 cursor-pointer">Sign out</span>
+      <div className="flex justify-between mt-4">
+        <span className="cursor-pointer text-red-700">Delete account</span>
+        <span className="cursor-pointer text-red-700">Sign out</span>
       </div>
     </div>
   );
