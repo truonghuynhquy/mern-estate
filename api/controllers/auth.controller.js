@@ -166,3 +166,25 @@ export const google = async (req, res, next) => {
     next(error);
   }
 };
+
+export const signout = async (req, res, next) => {
+  try {
+    const token = req.cookies.access_token;
+    if (!token) {
+      return next(new AppError("No token found!", 401));
+    }
+
+    // Decode token to get user id
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // Remove user from Redis
+    await redis.del(`user:${userId}`);
+
+    // Remove token from cookies
+    res.clearCookie("access_token");
+    res.status(200).json("User has been logged out!");
+  } catch (error) {
+    next(error);
+  }
+};
