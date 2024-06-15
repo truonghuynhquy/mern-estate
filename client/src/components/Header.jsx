@@ -7,6 +7,7 @@ import { setError } from "../redux/errorAlert/errorSlice";
 
 const Header = () => {
   const { error } = useSelector((state) => state.error); // COMMENT: error { error: ...., loading: ... }
+  const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [alertOpen, setAlertOpen] = useState(true);
 
@@ -67,8 +68,16 @@ const Header = () => {
             </li>
           </Link>
 
-          <Link to="/sign-in">
-            <li className="text-slate-700 hover:underline">Sign In</li>
+          <Link to="/profile">
+            {currentUser ? (
+              <img
+                className="rounded-full h-7 w-7 object-cover"
+                src={currentUser.data.avatar}
+                alt="profile"
+              />
+            ) : (
+              <li className="text-slate-700 hover:underline">Sign In</li>
+            )}
           </Link>
         </ul>
       </div>
