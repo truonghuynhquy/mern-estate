@@ -7,16 +7,28 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { app } from "../firebase";
-import { setError, setSuccess } from "../redux/errorAlert/errorSlice";
+import {
+  setError,
+  setLoading,
+  setSuccess,
+} from "../redux/errorAlert/errorSlice";
+import { Link } from "react-router-dom";
+import { updateUserSuccess } from "../redux/user/userSlice";
 
 export default function Profile() {
   const { currentUser } = useSelector((state) => state.user);
+  const { loading } = useSelector((state) => state.error);
   const fileRef = useRef(null);
   const [file, setFile] = useState(undefined);
   const [filePercentage, setFilePercentage] = useState(0);
   const [fileUploadError, setFileUploadError] = useState(false);
   const [fileUploadSuccess, setFileUploadSuccess] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    avatar: "",
+  });
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -25,6 +37,17 @@ export default function Profile() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        username: currentUser.data.username || "",
+        email: currentUser.data.email || "",
+        password: "",
+        avatar: currentUser.data.avatar || "",
+      });
+    }
+  }, [currentUser]);
 
   const handleFileUpload = (file) => {
     const storage = getStorage(app);
@@ -76,11 +99,43 @@ export default function Profile() {
     );
   };
 
+  const handleChange = (e) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [e.target.id]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      dispatch(setLoading(true));
+      const res = await fetch(`/api/user/update/${currentUser.data.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      dispatch(setLoading(false));
+      if (!data.success) {
+        dispatch(setError(data.message));
+        return;
+      }
+      dispatch(updateUserSuccess(data));
+      dispatch(setSuccess("Update User Success"));
+    } catch (error) {
+      dispatch(setLoading(false));
+      dispatch(setError(error.message));
+    }
+  };
+
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
 
-      <form action="" className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="file"
           ref={fileRef}
@@ -90,7 +145,7 @@ export default function Profile() {
         />
 
         <img
-          src={formData.avatar || currentUser.data.avatar}
+          src={formData.avatar}
           alt="profile"
           className="rounded-full h-32 w-32 object-cover cursor-pointer self-center mt-2"
           onClick={() => fileRef.current.click()}
@@ -105,33 +160,43 @@ export default function Profile() {
         <input
           type="text"
           placeholder="Username"
-          defaultValue={currentUser.data.username}
+          value={formData.username}
           id="username"
           className="border p-3 rounded-lg"
+          onChange={handleChange}
         />
 
         <input
           type="email"
           placeholder="Email"
-          defaultValue={currentUser.data.email}
+          value={formData.email}
           id="email"
           className="border p-3 rounded-lg"
+          onChange={handleChange}
         />
 
         <input
           type="password"
           placeholder="Password"
+          value={formData.password}
           id="password"
           className="border p-3 rounded-lg"
+          onChange={handleChange}
         />
 
-        <button className="bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95">
-          Update
+        <button
+          disabled={loading}
+          className="bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80"
+        >
+          {loading ? "Loading..." : "Update"}
         </button>
 
-        <button className="bg-green-700 text-white rounded-lg p-3 uppercase hover:opacity-95">
+        <Link
+          to="/create-listing"
+          className="bg-green-700 text-white rounded-lg p-3 uppercase text-center hover:opacity-95"
+        >
           Create Listing
-        </button>
+        </Link>
       </form>
 
       <div className="flex justify-between mt-4">

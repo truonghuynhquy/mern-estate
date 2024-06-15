@@ -54,7 +54,7 @@ export const updateUser = async (req, res, next) => {
     // Save users in Redis
     await redis.set(`user:${req.params.id}`, JSON.stringify(userData[0]));
     const { password, ...rest } = userData[0];
-    res.json({ status: "success", data: rest });
+    res.json({ success: true, data: rest });
   } catch (error) {
     next(error);
   }
