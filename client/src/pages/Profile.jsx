@@ -13,7 +13,7 @@ import {
   setSuccess,
 } from "../redux/errorAlert/errorSlice";
 import { Link } from "react-router-dom";
-import { updateUserSuccess } from "../redux/user/userSlice";
+import { deleteUserSuccess, updateUserSuccess } from "../redux/user/userSlice";
 
 export default function Profile() {
   const { currentUser } = useSelector((state) => state.user);
@@ -131,6 +131,18 @@ export default function Profile() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      const res = await fetch("/api/auth/signout", { method: "GET" });
+      const data = await res.json();
+
+      dispatch(deleteUserSuccess());
+      dispatch(setError(data));
+    } catch (error) {
+      dispatch(setError(error.message));
+    }
+  };
+
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
@@ -201,7 +213,9 @@ export default function Profile() {
 
       <div className="flex justify-between mt-4">
         <span className="cursor-pointer text-red-700">Delete account</span>
-        <span className="cursor-pointer text-red-700">Sign out</span>
+        <span onClick={handleSignOut} className="cursor-pointer text-red-700">
+          Sign out
+        </span>
       </div>
     </div>
   );
