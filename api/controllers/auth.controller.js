@@ -13,6 +13,13 @@ function removeAccents(str) {
     .toLowerCase(); // Convert to lowercase
 }
 
+async function checkIsValidPass(user, password, next) {
+  const validPassword = await bcryptjs.compare(password, user.password);
+  if (!validPassword) {
+    return next(new AppError("Invalid Password", 401));
+  }
+}
+
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
 
@@ -65,6 +72,15 @@ export const signin = async (req, res, next) => {
     const idRedis = await redis.get(`user:${email}`);
     let userData = await redis.get(`user:${idRedis}`);
 
+    // If ttl > 0, update time to live with no limit in redis
+    const ttl = await redis.ttl(`user:${idRedis}`);
+    if (ttl > 0) {
+      await Promise.all([
+        await redis.persist(`user:${email}`),
+        redis.persist(`user:${idRedis}`),
+      ]);
+    }
+
     if (userData) {
       userData = JSON.parse(userData); // If available in Redis, parse JSON from Redis
     } else {
@@ -73,6 +89,7 @@ export const signin = async (req, res, next) => {
         "SELECT * FROM users WHERE email = ?",
         [email]
       );
+
       if (dbUserData.length === 0) {
         return next(new AppError("User not found", 404));
       }
@@ -85,12 +102,8 @@ export const signin = async (req, res, next) => {
       ]);
     }
 
-    // Check password
-    const validPassword = await bcryptjs.compare(password, userData.password);
-
-    if (!validPassword) {
-      return next(new AppError("Invalid Password", 401));
-    }
+    // Check if password is valid
+    await checkIsValidPass(userData, password, next);
 
     // Create JWT Token
     const token = jwt.sign({ id: userData.id }, process.env.JWT_SECRET);
@@ -115,6 +128,15 @@ export const google = async (req, res, next) => {
     // Search for users in Redis first
     const idRedis = await redis.get(`user:${email}`);
     let userData = await redis.get(`user:${idRedis}`);
+
+    // If ttl > 0, update time to live with no limit in redis
+    const ttl = await redis.ttl(`user:${idRedis}`);
+    if (ttl > 0) {
+      await Promise.all([
+        await redis.persist(`user:${email}`),
+        redis.persist(`user:${idRedis}`),
+      ]);
+    }
 
     if (userData) {
       // If available in Redis, parse JSON
@@ -181,6 +203,24 @@ export const google = async (req, res, next) => {
 
 export const signout = async (req, res, next) => {
   try {
+    const token = req.cookies.access_token;
+    if (!token) {
+      return next(new AppError("Unauthorized", 401));
+    }
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Find id and email into Redis
+    const userId = decodedToken.id;
+    const userRedis = await redis.get(`user:${userId}`);
+    const email = JSON.parse(userRedis).email;
+
+    // Implementation of Redis TTL and remove user from Redis
+    const ttl = 2 * 60 * 60;
+    await Promise.all([
+      redis.expire(`user:${userId}`, ttl),
+      redis.expire(`user:${email}`, ttl),
+    ]);
+
     // Remove token from cookies
     res.clearCookie("access_token");
     res.status(200).json("User has been logged out!");
