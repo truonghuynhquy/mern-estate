@@ -12,13 +12,13 @@ export const updateUser = async (req, res, next) => {
     return next(new AppError("You can only update your own account!", 401));
   }
   try {
-    const { username, email, pass, avatar } = req.body;
+    const { username, email, password, avatar } = req.body;
 
     let hashedPassword = null;
-
-    if (pass) {
-      hashedPassword = bcryptjs.hashSync(pass, 10);
+    if (password) {
+      hashedPassword = bcryptjs.hashSync(password, 10);
     }
+    console.log(password, hashedPassword);
 
     // Update user in MySQL with conditional updates
     const sql = `
@@ -52,9 +52,45 @@ export const updateUser = async (req, res, next) => {
     ]);
 
     // Save users in Redis
-    await redis.set(`user:${req.params.id}`, JSON.stringify(userData[0]));
-    const { password, ...rest } = userData[0];
+    await Promise.all([
+      await redis.set(`user:${req.params.id}`, JSON.stringify(userData[0])),
+      redis.set(`user:${userData[0].email}`, req.params.id),
+    ]);
+
+    // Send response
+    const { password: pass, ...rest } = userData[0];
     res.json({ success: true, data: rest });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteUser = async (req, res, next) => {
+  if (req.user.id !== +req.params.id) {
+    return next(new AppError("You can only delete your own account!", 401));
+  }
+
+  try {
+    // Delete user in MySQL
+    const deleteUser = await dbQuery.query("DELETE FROM users WHERE id = ?", [
+      req.params.id,
+    ]);
+
+    const userRedis = await redis.get(`user:${req.params.id}`);
+    const email = JSON.parse(userRedis).email;
+
+    await Promise.all([
+      redis.del(`user:${req.params.id}`),
+      redis.del(`user:${email}`),
+    ]);
+
+    // Check if any user was deleted
+    if (deleteUser.affectedRows === 0) {
+      return next(new AppError("User not found", 404));
+    }
+
+    res.clearCookie("access_token");
+    res.status(200).json("User has been deleted!");
   } catch (error) {
     next(error);
   }

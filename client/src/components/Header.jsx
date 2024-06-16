@@ -18,14 +18,14 @@ const Header = () => {
       const timeout = setTimeout(() => {
         setAlertOpen(false);
         dispatch(setError(null)); //  Reset error message
-      }, 2000);
+      }, 1500);
       return () => clearTimeout(timeout);
     } else if (success) {
       setSuccessOpen(true);
       const timeout = setTimeout(() => {
         setSuccessOpen(false);
         dispatch(setSuccess(null)); // Reset success message
-      }, 2000);
+      }, 1500);
       return () => clearTimeout(timeout);
     }
   }, [error, success, dispatch]);

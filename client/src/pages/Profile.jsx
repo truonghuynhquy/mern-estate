@@ -131,6 +131,20 @@ export default function Profile() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      const res = await fetch(`/api/user/delete/${currentUser.data.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      dispatch(deleteUserSuccess());
+      dispatch(setSuccess(data));
+    } catch (error) {
+      dispatch(setError(error.message));
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       const res = await fetch("/api/auth/signout", { method: "GET" });
@@ -212,7 +226,12 @@ export default function Profile() {
       </form>
 
       <div className="flex justify-between mt-4">
-        <span className="cursor-pointer text-red-700">Delete account</span>
+        <span
+          onClick={handleDeleteAccount}
+          className="cursor-pointer text-red-700"
+        >
+          Delete account
+        </span>
         <span onClick={handleSignOut} className="cursor-pointer text-red-700">
           Sign out
         </span>
