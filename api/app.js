@@ -3,6 +3,7 @@ import morgan from "morgan";
 
 import userRouter from "./routes/user.route.js";
 import authRouter from "./routes/auth.route.js";
+import listingRouter from "./routes/listing.route.js";
 import { checkMySQLConnection } from "./database/dbConnection.js";
 import globalErrorHandler from "./controllers/error.controller.js";
 import cookieParser from "cookie-parser";
@@ -17,6 +18,7 @@ checkMySQLConnection();
 
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/listing", listingRouter);
 
 app.use(globalErrorHandler);
 
