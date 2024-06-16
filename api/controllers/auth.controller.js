@@ -41,7 +41,10 @@ export const signup = async (req, res, next) => {
     ]);
 
     // Save users in Redis
-    await redis.set(`user:${userId}`, JSON.stringify(userData[0]));
+    await Promise.all([
+      await redis.set(`user:${userId}`, JSON.stringify(userData[0])),
+      redis.set(`user:${email}`, userId),
+    ]);
 
     res.status(201).json({
       success: true,
@@ -59,11 +62,8 @@ export const signin = async (req, res, next) => {
 
   try {
     // Find users in Redis first
-    const resultRedis = await redis.get(`user:${email}`);
-    const userRedisResult = JSON.parse(resultRedis);
-    const redisId = userRedisResult.id;
-
-    let userData = await redis.get(`user:${redisId}`);
+    const idRedis = await redis.get(`user:${email}`);
+    let userData = await redis.get(`user:${idRedis}`);
 
     if (userData) {
       userData = JSON.parse(userData); // If available in Redis, parse JSON from Redis
@@ -79,7 +79,10 @@ export const signin = async (req, res, next) => {
       userData = dbUserData[0];
 
       // Store users into Redis
-      await redis.set(`user:${userData.id}`, JSON.stringify(userData)); // Lưu trữ trong Redis
+      await Promise.all([
+        await redis.set(`user:${userData.id}`, JSON.stringify(userData)),
+        redis.set(`user:${email}`, userData.id),
+      ]);
     }
 
     // Check password
@@ -110,7 +113,8 @@ export const google = async (req, res, next) => {
 
   try {
     // Search for users in Redis first
-    let userData = await redis.get(`user:${email}`);
+    const idRedis = await redis.get(`user:${email}`);
+    let userData = await redis.get(`user:${idRedis}`);
 
     if (userData) {
       // If available in Redis, parse JSON
@@ -153,7 +157,10 @@ export const google = async (req, res, next) => {
         userData = dbUserData[0];
       }
       // Save user information to Redis
-      await redis.set(`user:${email}`, JSON.stringify(userData));
+      await Promise.all([
+        await redis.set(`user:${userData.id}`, JSON.stringify(userData)),
+        redis.set(`user:${email}`, userData.id),
+      ]);
     }
 
     // Generate JWT tokens
@@ -174,18 +181,6 @@ export const google = async (req, res, next) => {
 
 export const signout = async (req, res, next) => {
   try {
-    const token = req.cookies.access_token;
-    if (!token) {
-      return next(new AppError("No token found!", 401));
-    }
-
-    // Decode token to get user id
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
-
-    // Remove user from Redis
-    await redis.del(`user:${userId}`);
-
     // Remove token from cookies
     res.clearCookie("access_token");
     res.status(200).json("User has been logged out!");
