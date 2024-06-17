@@ -168,7 +168,7 @@ export default function Profile() {
         dispatch(setError(data.message));
         return;
       }
-      console.log("DATA", data);
+
       for (let i = 0; i < data.data.length; i++) {
         data.data[i].imageUrls = JSON.parse(data.data[i].imageUrls);
       }
@@ -178,7 +178,22 @@ export default function Profile() {
     }
   };
 
-  const handleListingDelete = async () => {};
+  const handleListingDelete = async (listingId) => {
+    console.log(listingId);
+    try {
+      const res = await fetch(`/api/listing/delete/${listingId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      dispatch(setSuccess(data));
+
+      setUserListings((prevData) =>
+        prevData.filter((listing) => listing.id !== listingId)
+      );
+    } catch (error) {
+      dispatch(setError(error.message));
+    }
+  };
 
   return (
     <div className="p-3 max-w-lg mx-auto">
