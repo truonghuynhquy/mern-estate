@@ -99,15 +99,44 @@ export const deleteUser = async (req, res, next) => {
 export const getUserListings = async (req, res, next) => {
   if (req.user.id === +req.params.id) {
     try {
-      const listings = await dbQuery.query(
-        "SELECT * FROM listings WHERE userRef =?",
-        [req.params.id]
-      );
+      let listings = await redis.get(`listing:${+req.params.id}`);
+      if (listings) {
+        listing = [JSON.parse(listing)];
+      } else {
+        listings = await dbQuery.query(
+          "SELECT * FROM listings WHERE userRef =?",
+          [req.params.id]
+        );
+      }
+
       res.json({ success: true, data: listings });
     } catch (error) {
       next(error);
     }
   } else {
     return next(new AppError("You can only view your own listings!", 401));
+  }
+};
+
+export const getUser = async (req, res, next) => {
+  try {
+    let user = await redis.get(`user:${+req.params.id}`);
+    if (user) {
+      user = JSON.parse(user);
+    } else {
+      const userDB = await dbQuery.query("SELECT * FROM users WHERE id =?", [
+        req.params.id,
+      ]);
+
+      if (userDB.length === 0) {
+        return next(new AppError("User not found", 404));
+      }
+
+      user = userDB[0];
+    }
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    next(error);
   }
 };
