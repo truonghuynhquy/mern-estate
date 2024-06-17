@@ -95,3 +95,19 @@ export const deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getUserListings = async (req, res, next) => {
+  if (req.user.id === +req.params.id) {
+    try {
+      const listings = await dbQuery.query(
+        "SELECT * FROM listings WHERE userRef =?",
+        [req.params.id]
+      );
+      res.json({ success: true, data: listings });
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    return next(new AppError("You can only view your own listings!", 401));
+  }
+};

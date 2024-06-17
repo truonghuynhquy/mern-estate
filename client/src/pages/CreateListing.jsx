@@ -162,7 +162,7 @@ export default function CreateListing() {
         return;
       }
       dispatch(setSuccess("Successfully created listing"));
-      navigate(`/listing/${data.id}`);
+      navigate(`/listing/${data.data.id}`);
     } catch (error) {
       dispatch(setError(error.message));
       dispatch(setLoading(false));
