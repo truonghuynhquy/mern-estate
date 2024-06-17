@@ -12,6 +12,7 @@ import {
   setSuccess,
 } from "../redux/errorAlert/errorSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateListing() {
   const [files, setFiles] = useState([]);
@@ -31,9 +32,10 @@ export default function CreateListing() {
   });
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
+  const [uploading, setUploading] = useState(false);
   const { loading } = useSelector((state) => state.error); // COMMENT: error { error: ...., loading: ... }
+  const navigate = useNavigate();
 
-  console.log(formData);
   const handleImageSubmit = () => {
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
       dispatch(setLoading(true));
@@ -139,6 +141,7 @@ export default function CreateListing() {
         );
       }
       dispatch(setLoading(true));
+      setUploading(true);
 
       const res = await fetch("/api/listing/create", {
         method: "POST",
@@ -153,14 +156,17 @@ export default function CreateListing() {
       const data = await res.json();
 
       dispatch(setLoading(false));
+      setUploading(false);
       if (!data.success) {
         dispatch(setError(data.message));
         return;
       }
       dispatch(setSuccess("Successfully created listing"));
+      navigate(`/listing/${data.id}`);
     } catch (error) {
       dispatch(setError(error.message));
       dispatch(setLoading(false));
+      setUploading(false);
       console.log(error);
     }
   };
@@ -380,8 +386,11 @@ export default function CreateListing() {
               </div>
             ))}
 
-          <button className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80">
-            Create listing
+          <button
+            disabled={uploading}
+            className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+          >
+            {uploading ? "Creating..." : "Create listing"}
           </button>
         </div>
       </form>
