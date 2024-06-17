@@ -7,7 +7,6 @@ export const createListing = async (req, res, next) => {
       ...req.body,
       imageUrls: JSON.stringify(req.body.imageUrls),
     });
-    console.log(valuesArray);
 
     const insertQuery = `
       INSERT INTO listings (name, description, address, regularPrice, discountPrice, bathrooms, bedrooms, furnished, parking, type, offer, imageUrls, userRef)
