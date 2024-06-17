@@ -42,7 +42,6 @@ export default function CreateListing() {
       const listingId = params.listingId;
       const res = await fetch(`/api/listing/get/${listingId}`);
       const data = await res.json();
-      console.log(data);
 
       if (!data.success) {
         dispatch(setError(data.message));
@@ -56,6 +55,7 @@ export default function CreateListing() {
     };
 
     fetchListing();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleImageSubmit = () => {
