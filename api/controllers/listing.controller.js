@@ -2,11 +2,13 @@ import { dbQuery } from "../database/dbQuery.js";
 import redis from "../database/redisClient.js";
 
 export const createListing = async (req, res, next) => {
+  console.log(req.body);
   try {
     const valuesArray = Object.values({
       ...req.body,
       imageUrls: JSON.stringify(req.body.imageUrls),
     });
+    console.log(valuesArray);
 
     const insertQuery = `
       INSERT INTO listings (name, description, address, regularPrice, discountPrice, bathrooms, bedrooms, furnished, parking, type, offer, imageUrls, userRef)
