@@ -103,3 +103,73 @@ export const getListing = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getListings = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 9;
+    const startIndex = parseInt(req.query.startIndex) || 0;
+
+    let offer = req.query.offer;
+    let furnished = req.query.furnished;
+    let parking = req.query.parking;
+    let type = req.query.type;
+
+    const searchTerm = req.query.searchTerm || "";
+    const sort = req.query.sort || "created_at";
+    const order = req.query.order || "DESC";
+
+    // Create a cache key based on query parameters
+    const cacheKey = `listings:${limit}:${startIndex}:${offer}:${furnished}:${parking}:${type}:${searchTerm}:${sort}:${order}`;
+
+    // Check if the key exists in the cache and return the cached data
+    const cachedResult = await redis.get(cacheKey);
+    if (cachedResult) {
+      return res.status(200).json(JSON.parse(cachedResult));
+    }
+
+    // Build SQL query
+    let query = "SELECT * FROM listings WHERE name LIKE ?";
+    const queryParams = [`%${searchTerm}%`];
+
+    //  Start query conditions
+    if (offer === undefined || offer === "false") {
+      query += " AND offer IN (false, true)";
+    } else {
+      query += " AND offer = ?";
+      queryParams.push(offer === "true");
+    }
+
+    if (furnished === undefined || furnished === "false") {
+      query += " AND furnished IN (false, true)";
+    } else {
+      query += " AND furnished = ?";
+      queryParams.push(furnished === "true");
+    }
+
+    if (parking === undefined || parking === "false") {
+      query += " AND parking IN (false, true)";
+    } else {
+      query += " AND parking = ?";
+      queryParams.push(parking === "true");
+    }
+
+    if (type === undefined || type === "all") {
+      query += ' AND type IN ("sale", "rent")';
+    } else {
+      query += " AND type = ?";
+      queryParams.push(type);
+    }
+
+    query += ` ORDER BY ${sort} ${order} LIMIT ? OFFSET ?`;
+    queryParams.push(limit, startIndex);
+
+    const results = await dbQuery.query(query, queryParams);
+
+    // Store the result in the cache
+    await redis.set(cacheKey, JSON.stringify(results), "EX", 3600);
+
+    return res.status(200).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
