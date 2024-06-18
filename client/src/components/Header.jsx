@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Alert } from "@mui/material";
 import { FaSearch } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
@@ -8,9 +8,11 @@ import { setError, setSuccess } from "../redux/errorAlert/errorSlice";
 const Header = () => {
   const { error, success } = useSelector((state) => state.error); // COMMENT: error { error: ...., loading: ... }
   const { currentUser } = useSelector((state) => state.user);
+  const [searchTerm, setSearchTerm] = useState("");
   const dispatch = useDispatch();
   const [alertOpen, setAlertOpen] = useState(true);
   const [successOpen, setSuccessOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (error) {
@@ -36,6 +38,24 @@ const Header = () => {
     dispatch(setSuccess(null));
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set("searchTerm", searchTerm);
+    const searchQuery = urlParams.toString();
+    navigate(`/search?${searchQuery}`);
+  };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const searchTermFromUrl = urlParams.get("searchTerm");
+    console.log(searchTermFromUrl);
+    if (searchTermFromUrl) {
+      setSearchTerm(searchTermFromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
   return (
     <header className="bg-slate-200 shadow-md relative">
       {(error || success) && (
@@ -57,11 +77,16 @@ const Header = () => {
           </h1>
         </Link>
 
-        <form className="bg-slate-100 p-3 rounded-lg flex items-center">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-slate-100 p-3 rounded-lg flex items-center"
+        >
           <input
             type="text"
             placeholder="Search ...."
             className="bg-transparent focus:outline-none w-24 sm:w-64"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button>
             <FaSearch className="text-slate-600" />
